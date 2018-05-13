@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Search</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'main.css') }}">
+
+{#    jquery#}
+    <link href="//code.jquery.com/ui/1.12.0/themes/smoothness/jquery-ui.css" rel="Stylesheet">
+    <script src="{{ url_for('static', filename='jquery-3.2.1.min.js') }}"></script>
+    <script
+          src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js"
+          integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E="
+    crossorigin="anonymous"></script>
+
+    <link href="{{ url_for('static', filename='nouislider.min.css') }}" rel="stylesheet">
+</head>
+
+<body>
+<section class="jumbotron text-center">
+    <div class="container">
+        <h1 class="jumbotron-heading">Sŕč</h1>
+        <p class="lead text-muted">
+            Nájdi to, čo si vždy chcel!<br>
+        </p>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 offset-3">
+                <form action="/search">
+                    <div class="wrapper">
+                        <div class="input-group">
+                            <input id="autocomplete" class="form-control" type="search" name="q" placeholder="Find an offer" value="{{ q|safe }}">
+                            <button id="search-button" class="btn" type="submit">Search</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<div class="container">
+Query time: {{ offers.took }}ms <br>
+Total results: {{ offers.hits.total }}
+</div>
+{#PRICE FILTER#}
+<div class="container under-search">
+    <div class="row">
+
+        <div class="col-md-4 offset-2">
+            <div id="price-slider"></div>
+        </div>
+
+        <div class="col-md-6">
+
+                From: <input type="text" id="datepicker_from">
+                To: <input type="text" id="datepicker_to">
+
+        </div>
+    </div>
+</div>
+
+<div class="col-md-12 row under-search">
+
+    {% if offers.hits.hits %}
+
+            <div class=" col-md-1 offset-1">
+
+                <div class="selected-filters">
+                    <h3>Filters</h3>
+                    {% if filters  %}
+                        {% for filter_key, filter_values in filters.items() %}
+                            {% for filter_value in filter_values %}
+                                <span>{{ filter_key | title }}</span>
+                                {% with url_replace=filter_key + '=' + filter_value %}
+                                    <a class="btn btn-default btn-xs" href="{{ request.url | replace(url_replace + '&', '') | replace('&' + url_replace, '') | replace(url_replace, '')}}">
+                                        {{ filter_value }} x
+                                    </a>
+                                {% endwith %}
+                            {% endfor %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                {% with offers=offers, field='category' %}
+                    {% include 'filter.html' %}
+                {% endwith %}
+
+                {% with offers=offers, field='subcategory' %}
+                    {% include 'filter.html' %}
+                {% endwith %}
+
+                {% with offers=offers, field='price_type' %}
+                    {% include 'filter.html' %}
+                {% endwith %}
+
+                {% with offers=offers, field='city' %}
+                    {% include 'filter.html' %}
+                {% endwith %}
+
+            </div>
+
+
+        {% include 'results.html' %}
+
+
+    {% else %}
+        No offers!
+    {% endif %}
+</div>
+
+
+<script src="{{ url_for('static', filename='nouislider.min.js') }}"></script>
+</body>
+<script>
+$(function() {
+    $("#autocomplete").autocomplete({
+        source: function (request, response) {
+            $.getJSON("{{url_for('autocomplete')}}", {
+                q: request.term,
+                filters: request.filters
+            }, function (data) {
+                response(data.matching_results);
+            });
+        },
+        minLength: 2,
+        select: function (event, ui) {
+            event.preventDefault();
+            $("#autocomplete").val(ui.item.value);
+        }
+    });
+
+    // add slider PRICE
+    var slider = document.getElementById('price-slider');
+
+    var min_price = {{ offers.aggregations.min_price.value | int}};
+    var max_price = {{ offers.aggregations.max_price.value | int}};
+
+    noUiSlider.create(slider, {
+        start: [20, 150],
+        connect: true,
+        range: {
+            'min': min_price,
+            'max': max_price
+        },
+	    tooltips: true
+    });
+
+    slider.noUiSlider.on('set', function(values, handle){
+        $.get(
+           '/search-ajax',
+           {
+               q: $('#autocomplete').val(),
+               filters: "{{ filters }}",
+               price_from: values[0],
+               price_to: values[1]
+           },
+           function(response){
+               $('#offers').replaceWith(response);
+           }
+        );
+    });
+
+    // add DATE PICKERS
+    $('#datepicker_from').datepicker({
+{#            setDate: new Date('11/2/2017'),#}
+            dateFormat: 'dd.mm.yy',
+            showButtonPanel: true,
+            onSelect: function (selected_date) {
+                $.get(
+                   '/search-ajax',
+                   {
+                       q: $('#autocomplete').val(),
+                       filters: "{{ filters }}",
+                       date_from: selected_date
+                   },
+                   function(response){
+                       $('#offers').replaceWith(response);
+                   }
+                );
+            }
+        });
+    $('#datepicker_to').datepicker({
+            dateFormat: 'dd.mm.yy',
+            showButtonPanel: true,
+            onSelect: function (selected_date) {
+                $.get(
+                   '/search-ajax',
+                   {
+                       q: $('#autocomplete').val(),
+                       filters: "{{ filters }}",
+                       date_to: selected_date
+                   },
+                   function(response){
+                       $('#offers').replaceWith(response);
+                   }
+                );
+            }
+        });
+
+})
+
+
+</script>
+
+</html>

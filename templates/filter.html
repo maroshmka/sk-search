@@ -1,0 +1,15 @@
+<fieldset class="checkboxgroup">
+    <h5>{{ field | title}}</h5>
+    <ul>
+        {% for bucket in get_buckets(offers, field) %}
+            <li>
+                {% if request.args %}
+                    <a href="{{ request.url}}&{{ field }}={{ bucket.key }}">{{ bucket.key }}({{ bucket.doc_count }})</a>
+                {% else %}
+                    <a href="{{ request.url }}?{{ field }}={{ bucket.key }}">{{ bucket.key }}({{ bucket.doc_count }})</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+
+    </ul>
+</fieldset>

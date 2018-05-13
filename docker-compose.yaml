@@ -1,0 +1,27 @@
+---
+version: '2'
+
+services:
+
+  web:
+    build: .
+    env_file: .env
+    volumes:
+      - './:/app/app:cached'
+      - './data:/data:cached'
+    ports:
+      - 5000:5000
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    build:
+      context: .
+      dockerfile: elastics.Dockerfile
+    ports:
+      - 9200:9200
+
+  kibana:
+    image: kibana
+    ports:
+      - 5601:5601

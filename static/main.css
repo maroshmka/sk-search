@@ -1,0 +1,74 @@
+
+html,
+body{
+    height: 100%;
+    font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+}
+
+.header{
+    background-color: #3c763d;
+}
+
+em{
+    font-style: normal;
+    background-color: yellow;
+}
+
+ul{
+    list-style-type: none;
+    padding-left: 0;
+}
+.right{
+    float:right;
+}
+
+
+#wrapper {
+  background-color: green; /* for vizualization purposes */
+  text-align: center;
+}
+#search {
+  background-color: red; /* for vizualization purposes */
+  display: inline-block;
+}
+
+.under-search{
+    padding-top: 3rem;
+}
+
+.filters {
+    padding-left: 8rem;
+}
+
+.checkboxgroup{
+    width: 13rem;
+    overflow: auto;
+    padding-bottom: 1rem;
+}
+.checkboxgroup p{
+    width: auto;
+    text-align: left;
+}
+.checkboxgroup .filter-link{
+    width: auto;
+    float: left;
+    display: block;
+}
+
+.form-control{
+    display: inline-block;
+}
+
+.filter-btn{
+    margin-bottom: 2rem;
+}
+
+.btn-default{
+    border: 3px solid black;
+    border-radius: 0;
+    margin-bottom: 0.5rem;
+}
+
+.red{
+    color: red;
+}
